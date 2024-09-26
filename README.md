@@ -1,2 +1,2 @@
 # redilock
-Simple Redis Distributed Lock
+Simple Redis Distributed Lock  - Work In Progress
