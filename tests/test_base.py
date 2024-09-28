@@ -6,7 +6,7 @@ import uuid
 import sys
 import os
 
-_parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+_parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, _parent_dir)
 
 import redilock.base as base
@@ -28,7 +28,7 @@ class TestRedisLuaScriptBase(unittest.TestCase):
         self.assertEqual(script_object._script, lua_script)
         self.assertEqual(
             script_object._script_sha1,
-            hashlib.sha1(lua_script.encode("utf-8")).hexdigest()
+            hashlib.sha1(lua_script.encode("utf-8")).hexdigest(),
         )
 
     def test_redis_script_async(self):
@@ -41,7 +41,7 @@ class TestRedisLuaScriptBase(unittest.TestCase):
         self.assertEqual(script_object._script, lua_script)
         self.assertEqual(
             script_object._script_sha1,
-            hashlib.sha1(lua_script.encode("utf-8")).hexdigest()
+            hashlib.sha1(lua_script.encode("utf-8")).hexdigest(),
         )
 
 
@@ -97,10 +97,7 @@ class TestDistributedLockBase(unittest.TestCase):
         )
 
         self.assertEqual(end_wait, None)
-        self.assertEqual(
-            unlock_secret_token,
-            "_LOCK_my_lock_name_AAAA-BBBB-CCCC-DDDD"
-        )
+        self.assertEqual(unlock_secret_token, "_LOCK_my_lock_name_AAAA-BBBB-CCCC-DDDD")
 
     def test_prepare_lock_with_timed_block(self):
         now = time.time()

@@ -1,4 +1,5 @@
 """Async Distributed Lock  (using redis)"""
+
 import asyncio
 import aioredis
 import time
@@ -11,15 +12,11 @@ class _RediScript(base.RedisLuaScriptBase):
 
     async def run(self, _redis: aioredis.Redis, keys: tuple, args: list):
         try:
-            result = await _redis.evalsha(
-                self._script_sha1, len(keys), *keys, *args
-            )
+            result = await _redis.evalsha(self._script_sha1, len(keys), *keys, *args)
 
         except aioredis.exceptions.NoScriptError:
             await _redis.script_load(self._script)
-            result = await _redis.evalsha(
-                self._script_sha1, len(keys), *keys, *args
-            )
+            result = await _redis.evalsha(self._script_sha1, len(keys), *keys, *args)
 
         return result
 
@@ -45,11 +42,11 @@ class DistributedLock(base.DistributedLockBase):
         await self._redis.ping()
 
     async def lock(
-            self,
-            lock_name: str,
-            ttl: float,
-            block: bool | float | int = True,
-            interval: float | int = 0.25
+        self,
+        lock_name: str,
+        ttl: float,
+        block: bool | float | int = True,
+        interval: float | int = 0.25,
     ):
         """Lock a resource (by lock name).  Wait until lock is owned.
 
@@ -94,7 +91,11 @@ class DistributedLock(base.DistributedLockBase):
 
         # Run the unlock-script with lock_name & unlock_secret_token
         return 1 == await self._unlock_script.run(
-            self._redis, (lock_name,), [unlock_secret_token, ]
+            self._redis,
+            (lock_name,),
+            [
+                unlock_secret_token,
+            ],
         )
 
 
@@ -108,4 +109,4 @@ async def my_test():
     print(lock)
 
 
-#asyncio.run(my_test())
+# asyncio.run(my_test())

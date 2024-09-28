@@ -10,7 +10,7 @@ setup(
     description="Simple Redis Distributed Lock",
     license="MIT",
     keywords="redis distributed lock mutex",
-    packages=['mean', 'tests', 'doc'],
+    packages=["mean", "tests", "doc"],
     long_description=open(_README_FILE).read(),
     classifiers=[
         "Development Status :: 3 - Alpha",

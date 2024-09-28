@@ -19,6 +19,7 @@ class RedisLuaScriptBase(abc.ABC):
     def run(self, _redis, keys: tuple, args: list):
         """Abstract method for sync run()"""
 
+
 # UNLOCK_SCRIPT: Redis Lua script to unlock a resource (KEY[1]) only if the
 #                caller provided the correct secret token (ARGV[1])
 UNLOCK_SCRIPT = """
@@ -36,14 +37,15 @@ _DEFAULT_REDIS_PORT = 6379
 _DEFAULT_REDIS_HOST = "localhost"
 _DEFAULT_REDIS_DB = 0
 
+
 class DistributedLockBase:
     """Distributed Lock - interface for async/sync implementations"""
 
     def __init__(
-            self,
-            redis_host: str = _DEFAULT_REDIS_HOST,
-            redis_port: int = _DEFAULT_REDIS_PORT,
-            redis_db: int = _DEFAULT_REDIS_DB
+        self,
+        redis_host: str = _DEFAULT_REDIS_HOST,
+        redis_port: int = _DEFAULT_REDIS_PORT,
+        redis_db: int = _DEFAULT_REDIS_DB,
     ):
         self._redis = None
         self._redis_host: str = redis_host
@@ -52,18 +54,18 @@ class DistributedLockBase:
 
     @classmethod
     def _prepare_lock(
-            cls,
-            lock_name: str,
-            ttl: float,
-            block: bool | float | int,
-            interval: float | int
+        cls,
+        lock_name: str,
+        ttl: float,
+        block: bool | float | int,
+        interval: float | int,
     ):
         assert isinstance(ttl, (int, float)) and ttl > 0, "ttl must be >0"
-        assert isinstance(interval, (int, float)) and interval > 0, \
-            "interval must be >0"
+        assert (
+            isinstance(interval, (int, float)) and interval > 0
+        ), "interval must be >0"
         if block not in (True, False):
-            assert isinstance(block, (int, float)) and block > 0, \
-                "block must be >0"
+            assert isinstance(block, (int, float)) and block > 0, "block must be >0"
             end_wait = time.time() + block
         else:
             end_wait = None
@@ -72,11 +74,11 @@ class DistributedLockBase:
 
     @abc.abstractmethod
     async def lock(
-            self,
-            lock_name: str,
-            ttl: float,
-            block: float | bool = True,
-            interval: float = 0.25
+        self,
+        lock_name: str,
+        ttl: float,
+        block: float | bool = True,
+        interval: float = 0.25,
     ):
         """Lock a resource (by lock name).  Wait until lock is owned.
 
@@ -93,11 +95,11 @@ class DistributedLockBase:
 
     @abc.abstractmethod
     def lock(
-            self,
-            lock_name: str,
-            ttl: float,
-            block: float | bool = True,
-            interval: float = 0.25
+        self,
+        lock_name: str,
+        ttl: float,
+        block: float | bool = True,
+        interval: float = 0.25,
     ):
         """Refer to docstring for async lock()"""
 

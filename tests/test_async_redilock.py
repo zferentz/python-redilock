@@ -5,7 +5,7 @@ import os
 
 import aioredis
 
-_parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+_parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, _parent_dir)
 
 import redilock.async_redilock as redilock
@@ -20,14 +20,12 @@ class TestRediScriptAsync(unittest.IsolatedAsyncioTestCase):
         mock_redis = unittest.mock.AsyncMock()
 
         # mock evalsha: first run throw NoScriptError and then return OK
-        mock_redis.evalsha.side_effect = [
-            aioredis.exceptions.NoScriptError, "OK"
-        ]
+        mock_redis.evalsha.side_effect = [aioredis.exceptions.NoScriptError, "OK"]
         result = await script.run(mock_redis, keys, args)
         mock_redis.evalsha.assert_has_calls(
             [
                 unittest.mock.call(script._script_sha1, 0),
-                unittest.mock.call(script._script_sha1, 0)
+                unittest.mock.call(script._script_sha1, 0),
             ]
         )
 
@@ -48,7 +46,7 @@ class TestRediScriptAsync(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result, "OK")
 
 
-class TestRediLockSync(unittest.IsolatedAsyncioTestCase):
+class TestRediLockAsync(unittest.IsolatedAsyncioTestCase):
 
     @unittest.mock.patch.object(
         aioredis, "from_url", new_callable=unittest.mock.AsyncMock
@@ -59,7 +57,7 @@ class TestRediLockSync(unittest.IsolatedAsyncioTestCase):
         await lock._connect()
         self.assertEqual(lock._redis, mock_redis.return_value)
         mock_redis.assert_called_once_with(
-            url='redis://host:6379/', db=2, password=None, encoding='utf-8'
+            url="redis://host:6379/", db=2, password=None, encoding="utf-8"
         )
 
         # Make sure that we dont connect twice
@@ -74,7 +72,7 @@ class TestRediLockSync(unittest.IsolatedAsyncioTestCase):
         lock = redilock.DistributedLock()
         secret_token = await lock.lock("mylock", 1000)
         mock_redis.return_value.set.assert_called_once_with(
-            'mylock', secret_token, px=1000000, nx=True
+            "mylock", secret_token, px=1000000, nx=True
         )
 
     @unittest.mock.patch.object(
@@ -88,8 +86,8 @@ class TestRediLockSync(unittest.IsolatedAsyncioTestCase):
         mock_sleep.assert_called_once_with(0.33)
         mock_redis.return_value.set.asserrt_has_calls(
             [
-                unittest.mock.call('mylock', secret_token, px=1000000, nx=True),
-                unittest.mock.call('mylock', secret_token, px=1000000, nx=True)
+                unittest.mock.call("mylock", secret_token, px=1000000, nx=True),
+                unittest.mock.call("mylock", secret_token, px=1000000, nx=True),
             ]
         )
 
@@ -99,5 +97,5 @@ class TestRediLockSync(unittest.IsolatedAsyncioTestCase):
         lock._unlock_script = unittest.mock.AsyncMock()
         await lock.unlock("mylock", "my_secret_token")
         lock._unlock_script.run.assert_called_once_with(
-            lock._redis, ('mylock',), ['my_secret_token']
+            lock._redis, ("mylock",), ["my_secret_token"]
         )

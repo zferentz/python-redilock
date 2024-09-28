@@ -1,4 +1,5 @@
 """Distributed Lock  (using redis)"""
+
 import redis
 import threading
 import time
@@ -36,11 +37,11 @@ class DistributedLock(base.DistributedLockBase):
         self._redis.ping()
 
     def lock(
-            self,
-            lock_name: str,
-            ttl: float,
-            block: bool | float | int = True,
-            interval: float | int = 0.25
+        self,
+        lock_name: str,
+        ttl: float,
+        block: bool | float | int = True,
+        interval: float | int = 0.25,
     ):
         """Lock a resource (by lock name).  Wait until lock is owned.
 
@@ -85,8 +86,13 @@ class DistributedLock(base.DistributedLockBase):
 
         # Run the unlock-script with lock_name & unlock_secret_token
         return 1 == self._unlock_script.run(
-            self._redis, (lock_name,), [unlock_secret_token, ]
+            self._redis,
+            (lock_name,),
+            [
+                unlock_secret_token,
+            ],
         )
+
 
 def mytest():
     dl = DistributedLock()

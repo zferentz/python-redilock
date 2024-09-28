@@ -5,7 +5,7 @@ import time
 
 import redis
 
-_parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+_parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, _parent_dir)
 
 import redilock.sync_redilock as redilock
@@ -25,7 +25,7 @@ class TestRediScriptSync(unittest.TestCase):
         mock_redis.evalsha.assert_has_calls(
             [
                 unittest.mock.call(script._script_sha1, 0),
-                unittest.mock.call(script._script_sha1, 0)
+                unittest.mock.call(script._script_sha1, 0),
             ]
         )
 
@@ -54,9 +54,7 @@ class TestRediLockSync(unittest.TestCase):
         self.assertIsNone(lock._redis)
         lock._connect()
         self.assertEqual(lock._redis, mock_redis.return_value)
-        mock_redis.assert_called_once_with(
-            host='host', port=6379, db=2
-        )
+        mock_redis.assert_called_once_with(host="host", port=6379, db=2)
 
         # Make sure that we dont connect twice
         lock._connect()
@@ -68,7 +66,7 @@ class TestRediLockSync(unittest.TestCase):
         lock = redilock.DistributedLock()
         secret_token = lock.lock("mylock", 1000)
         mock_redis.return_value.set.assert_called_once_with(
-            'mylock', secret_token, px=1000000, nx=True
+            "mylock", secret_token, px=1000000, nx=True
         )
 
     @unittest.mock.patch.object(redis, "StrictRedis")
@@ -80,8 +78,8 @@ class TestRediLockSync(unittest.TestCase):
         mock_sleep.assert_called_once_with(0.33)
         mock_redis.return_value.set.asserrt_has_calls(
             [
-                unittest.mock.call('mylock', secret_token, px=1000000, nx=True),
-                unittest.mock.call('mylock', secret_token, px=1000000, nx=True)
+                unittest.mock.call("mylock", secret_token, px=1000000, nx=True),
+                unittest.mock.call("mylock", secret_token, px=1000000, nx=True),
             ]
         )
 
@@ -91,5 +89,5 @@ class TestRediLockSync(unittest.TestCase):
         lock._unlock_script = unittest.mock.MagicMock()
         lock.unlock("mylock", "my_secret_token")
         lock._unlock_script.run.assert_called_once_with(
-            lock._redis, ('mylock',), ['my_secret_token']
+            lock._redis, ("mylock",), ["my_secret_token"]
         )
