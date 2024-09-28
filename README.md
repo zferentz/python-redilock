@@ -31,6 +31,8 @@ to any cloud/distributed environment.
       be eventually released
     * Unlocking the lock can be performed only by the party who put the lock
 
+### Installation
+```pip install python-redilock```
   
 ### Usage & Examples
 
