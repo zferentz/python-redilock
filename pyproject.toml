@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=57.5.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "python-redilock"
+version = "0.0.7"
+authors = [
+  { name="Zvika Ferentz", email="zvika.ferentz@gmail.com" },
+]
+description = "Redis Distributed Lock"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/zferentz/python-redilock"
+Issues = "https://github.com/zferentz/python-redilock/issues"
