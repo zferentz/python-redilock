@@ -3,7 +3,8 @@ import unittest.mock
 import sys
 import os
 
-import aioredis
+import redis
+import redis.asyncio
 
 _parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, _parent_dir)
@@ -20,7 +21,7 @@ class TestRediScriptAsync(unittest.IsolatedAsyncioTestCase):
         mock_redis = unittest.mock.AsyncMock()
 
         # mock evalsha: first run throw NoScriptError and then return OK
-        mock_redis.evalsha.side_effect = [aioredis.exceptions.NoScriptError,
+        mock_redis.evalsha.side_effect = [redis.exceptions.NoScriptError,
                                           "OK"]
         result = await script.run(mock_redis, keys, args)
         mock_redis.evalsha.assert_has_calls(
@@ -50,7 +51,7 @@ class TestRediScriptAsync(unittest.IsolatedAsyncioTestCase):
 class TestRediLockAsync(unittest.IsolatedAsyncioTestCase):
 
     @unittest.mock.patch.object(
-        aioredis, "from_url", new_callable=unittest.mock.AsyncMock
+        redis.asyncio, "from_url", new_callable=unittest.mock.AsyncMock
     )
     async def test_connect(self, mock_redis):
         lock = redilock.DistributedLock("host", 6379, 2)
@@ -66,7 +67,7 @@ class TestRediLockAsync(unittest.IsolatedAsyncioTestCase):
         mock_redis.assert_called_once()
 
     @unittest.mock.patch.object(
-        aioredis, "from_url", new_callable=unittest.mock.AsyncMock
+        redis.asyncio, "from_url", new_callable=unittest.mock.AsyncMock
     )
     async def test_lock_success_on_1st_attempt(self, mock_redis):
         mock_redis.return_value.set.return_value = 1
@@ -77,7 +78,7 @@ class TestRediLockAsync(unittest.IsolatedAsyncioTestCase):
         )
 
     @unittest.mock.patch.object(
-        aioredis, "from_url", new_callable=unittest.mock.AsyncMock
+        redis.asyncio, "from_url", new_callable=unittest.mock.AsyncMock
     )
     @unittest.mock.patch.object(asyncio, "sleep")
     async def test_lock_success_on_2nd_attempt(self, mock_sleep, mock_redis):

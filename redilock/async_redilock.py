@@ -4,7 +4,8 @@ import asyncio
 import contextlib
 import time
 
-import aioredis
+import redis
+import redis.asyncio
 
 import redilock.base as base
 
@@ -12,11 +13,11 @@ import redilock.base as base
 class _RediScript(base.RedisLuaScriptBase):
     """Helper to store and run Redis Lua scripts - async implementation"""
 
-    async def run(self, _redis: aioredis.Redis, keys: tuple, args: list):
+    async def run(self, _redis: redis.Redis, keys: tuple, args: list):
         try:
             result = await _redis.evalsha(self._script_sha1, len(keys), *keys, *args)
 
-        except aioredis.exceptions.NoScriptError:
+        except redis.exceptions.NoScriptError:
             await _redis.script_load(self._script)
             result = await _redis.evalsha(self._script_sha1, len(keys), *keys, *args)
 
@@ -34,7 +35,7 @@ class DistributedLock(base.DistributedLockBase):
             if self._redis:
                 return
 
-            self._redis = await aioredis.from_url(
+            self._redis = await redis.asyncio.from_url(
                 url=f"redis://{self._redis_host}:{self._redis_port}/",
                 db=self._redis_db,
                 password=None,
@@ -107,3 +108,11 @@ class DistributedLock(base.DistributedLockBase):
             yield self
         finally:
             await self.unlock(lock_name, unlock_secret_token)
+
+async def main():
+    mylock = DistributedLock(ttl=4)
+    async with mylock("my_lock"):
+        print("I've got the lock1 !!")
+        async with mylock("my_lock"):
+            print("I've got the lock2 !!")
+asyncio.run(main())
