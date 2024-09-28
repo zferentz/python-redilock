@@ -21,10 +21,10 @@ As Redis is a storage/caching system, we can use it to act as a distributed lock
 **Redilock** is a simple python package that acts as a simple distributed lock and  allows you to add locking capabilites to any cloud/distributed environment.
 
 **Redilock** main features:
-* Simple to use - only 2 api calls `lock()` and `unlock()` .
+* Simple to use - only 2 api calls `lock()` and `unlock()` 
 * Supports both synchronous implementation and an async implementation  
 * Safe: 
-  * When acquiring a lock, one must specify the lock-expiration (TTL) so even if the program/host crashes - the lock wil eventually be released
+  * When acquiring a lock, one must specify the lock-expiration (TTL - time to lock) so even if the program/host crashes - the lock eventually will be released
   * unlocking the lock can be performed only by the party who put the lock
 
 Examples:

@@ -2,24 +2,25 @@ import asyncio
 import random
 import redilock.async_redilock as redilock
 
-# Define lock
-lock = redilock.DistributedLock()
-
-lock_name = f"my_lock_{random.randint(0, 1000)}"
-
 
 async def main():
-    print("Step1: Locking for 5min...")
-    unlock_secret_token = await lock.lock(lock_name, 300)
+    # Define lock with 2 seconds maximum lock time
+    lock = redilock.DistributedLock(ttl=2)
+
+    lock_name = f"my_lock_{random.randint(0, 1000)}"
+
+    # Lock for 5 minutes (override the default 2s lock)
+    print("Step1: Lock for 5min...")
+    unlock_secret_token = await lock.lock(lock_name, ttl=300)
     assert unlock_secret_token
 
     print("Step2: Trying to lock again without waiting for the lock")
-    result = await lock.lock(lock_name, 5, False)
+    result = await lock.lock(lock_name, block=False)
     print(f"Got {result}")
     assert result is False
 
     print("Step3: Trying to lock again with 1s  wait")
-    result = await lock.lock(lock_name, 5, 1)
+    result = await lock.lock(lock_name, block=1)
     print(f"Got {result}")
     assert result is False
 
@@ -33,13 +34,11 @@ async def main():
     print(f"Got {result}")
     assert result is True
 
-    print("Step6: Locking for 5s...")
-    unlock_secret_token = await lock.lock(
-        lock_name,
-        5,
-    )
+    print("Step6: Trying to lock (after unlock)...")
+    unlock_secret_token = await lock.lock(lock_name)
     assert unlock_secret_token
     print("Done")
 
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

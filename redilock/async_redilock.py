@@ -1,8 +1,10 @@
 """Async Distributed Lock  (using redis)"""
 
 import asyncio
-import aioredis
+import contextlib
 import time
+
+import aioredis
 
 import redilock.base as base
 
@@ -44,9 +46,9 @@ class DistributedLock(base.DistributedLockBase):
     async def lock(
         self,
         lock_name: str,
-        ttl: float,
+        ttl: float = None,
         block: bool | float | int = True,
-        interval: float | int = 0.25,
+        interval: float | int = None,
     ):
         """Lock a resource (by lock name).  Wait until lock is owned.
 
@@ -64,7 +66,7 @@ class DistributedLock(base.DistributedLockBase):
         if not self._redis:
             await self._connect()
 
-        unlock_secret_token, end_wait = self._prepare_lock(
+        unlock_secret_token, ttl, end_wait, interval = self._prepare_lock(
             lock_name, ttl, block, interval
         )
 
@@ -97,3 +99,22 @@ class DistributedLock(base.DistributedLockBase):
                 unlock_secret_token,
             ],
         )
+
+    @contextlib.asynccontextmanager
+    async def __call__(self, lock_name: str, ttl: float = None):
+        unlock_secret_token = await self.lock(lock_name, ttl)
+        try:
+            yield self
+        finally:
+            await self.unlock(lock_name, unlock_secret_token)
+
+
+async def main():
+    l = DistributedLock(ttl=2)
+    async with l("resource"):
+        print("Lock acquired")
+        async with l("resource", 5):
+            print("Lock acquired again")
+
+
+asyncio.run(main())

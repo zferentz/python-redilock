@@ -1,8 +1,10 @@
 """Distributed Lock  (using redis)"""
 
-import redis
+import contextlib
 import threading
 import time
+
+import redis
 
 import redilock.base as base
 
@@ -39,9 +41,9 @@ class DistributedLock(base.DistributedLockBase):
     def lock(
         self,
         lock_name: str,
-        ttl: float,
+        ttl: float = None,
         block: bool | float | int = True,
-        interval: float | int = 0.25,
+        interval: float | int = None,
     ):
         """Lock a resource (by lock name).  Wait until lock is owned.
 
@@ -59,7 +61,7 @@ class DistributedLock(base.DistributedLockBase):
         if not self._redis:
             self._connect()
 
-        unlock_secret_token, end_wait = self._prepare_lock(
+        unlock_secret_token, ttl, end_wait, interval = self._prepare_lock(
             lock_name, ttl, block, interval
         )
 
@@ -92,3 +94,18 @@ class DistributedLock(base.DistributedLockBase):
                 unlock_secret_token,
             ],
         )
+
+    @contextlib.contextmanager
+    def __call__(self, lock_name: str, ttl: float = None):
+        unlock_secret_token = self.lock(lock_name, ttl)
+        try:
+            yield self
+        finally:
+            self.unlock(lock_name, unlock_secret_token)
+
+
+l = DistributedLock(ttl=5)
+l.lock("resource")
+print("Lock acquired")
+with l("resource"):
+    print("Lock acquired again")

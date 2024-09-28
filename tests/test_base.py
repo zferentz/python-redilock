@@ -87,25 +87,63 @@ class TestDistributedLockBase(unittest.TestCase):
         self.assertEqual(lock._redis_port, 666)
         self.assertEqual(lock._redis_db, 12)
 
+    def test_prepare_lock_validation(self):
+        class MyTestDistributedLock(base.DistributedLockBase):
+            def run(self):
+                pass
+
+        mylock = MyTestDistributedLock()  # Missing ttl
+        with self.assertRaises(AssertionError):
+            mylock._prepare_lock("mylock", None, True, None)
+
+        mylock = MyTestDistributedLock(interval=2)  # Missing ttl
+        with self.assertRaises(AssertionError):
+            mylock._prepare_lock("mylock", None, True, None)
+
+        mylock = MyTestDistributedLock(ttl=1)
+        _, ttl, end_wait, interval = mylock._prepare_lock("mylock", None, True, None)
+        self.assertEqual(ttl, 1)
+        self.assertEqual(interval, base._DEFAULT_INTERVAL)
+
+        mylock = MyTestDistributedLock(ttl=1, interval=2)
+        _, ttl, end_wait, interval = mylock._prepare_lock("mylock", None, True, None)
+        self.assertEqual(ttl, 1)
+        self.assertEqual(interval, 2)
+
     @unittest.mock.patch.object(uuid, "uuid4")
     def test_prepare_lock(self, mock_uuid4):
+
+        class MyTestDistributedLock(base.DistributedLockBase):
+            def run(self):
+                pass
+
         mock_uuid4.return_value.hex = "AAAA-BBBB-CCCC-DDDD"
 
         # test with block=True
-        unlock_secret_token, end_wait = base.DistributedLockBase._prepare_lock(
-            "my_lock_name", 123, True, 666
+        mylock = MyTestDistributedLock(ttl=14, interval=0.66)
+        unlock_secret_token, ttl, end_wait, interval = mylock._prepare_lock(
+            "mylock", None, True, None
         )
 
         self.assertEqual(end_wait, None)
-        self.assertEqual(unlock_secret_token, "_LOCK_my_lock_name_AAAA-BBBB-CCCC-DDDD")
+        self.assertEqual(unlock_secret_token, "_LOCK_mylock_AAAA-BBBB-CCCC-DDDD")
+        self.assertEqual(ttl, 14)
+        self.assertEqual(interval, 0.66)
 
     def test_prepare_lock_with_timed_block(self):
+
+        class MyTestDistributedLock(base.DistributedLockBase):
+            async def run(self):
+                pass
+
         now = time.time()
         with unittest.mock.patch.object(time, "time") as mock_time:
             mock_time.return_value = now
-            # test with block=True
-            _, end_wait = base.DistributedLockBase._prepare_lock(
+            # test with block=1.23
+            _, ttl, end_wait, interval = MyTestDistributedLock()._prepare_lock(
                 "my_lock_name", 123, 1.23, 666
             )
 
         self.assertEqual(end_wait, now + 1.23)
+        self.assertEqual(ttl, 123)
+        self.assertEqual(interval, 666)
