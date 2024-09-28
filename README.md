@@ -32,23 +32,30 @@ to any cloud/distributed environment.
     * Unlocking the lock can be performed only by the party who put the lock
 
 ### Installation
-```pip install python-redilock```
+```# pip install python-redilock```
   
 ### Usage & Examples
 
 _(for synchronous code, async is identical and straightforward. check out the examples directory for more examples)_:
 
-The easiest way - using `with statement`
+The easiest way to use a lock (whether async or not) is using the `with statement`
 
 ```
 import redilock.sync_redilock as redilock
-mylock = redilock.DistributedLock(ttl=30)  # max lock for 30 seconds
+mylock = redilock.DistributedLock(ttl=30)  # auto-release after 30s
 
 with mylock("my_lock"):
   print("I've got the lock !!")
 ```
 
-Directly using `lock` and `unlock`
+Once creating the lock (`my_lock` variable)  it can be used to lock different resources (or different lock, if you prefer).
+In the example above, we use a simple with-statement to lock the "my_lock" lock,  print something and unlock.
+When using this approach, the lock is always blocking - the code will wait until the lock is available.
+Note that we're using `ttl=30` which means that if our code fails or the program crashes - the lock will expire after 30 seconds.
+
+
+
+If you do not want to rely on the with-statement or you need better control over the lock - you can directly using `lock` and `unlock`
 
 ```
 import redilock.sync_redilock as redilock
