@@ -108,11 +108,3 @@ class DistributedLock(base.DistributedLockBase):
             yield self
         finally:
             await self.unlock(lock_name, unlock_secret_token)
-
-async def main():
-    mylock = DistributedLock(ttl=4)
-    async with mylock("my_lock"):
-        print("I've got the lock1 !!")
-        async with mylock("my_lock"):
-            print("I've got the lock2 !!")
-asyncio.run(main())
