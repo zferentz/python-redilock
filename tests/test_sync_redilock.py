@@ -91,3 +91,14 @@ class TestRediLockSync(unittest.TestCase):
         lock._unlock_script.run.assert_called_once_with(
             lock._redis, ("mylock",), ["my_secret_token"]
         )
+
+    def test_with_lock(self):
+        mylock = redilock.DistributedLock()
+
+        with unittest.mock.patch.object(mylock, "lock") as mock_lock, \
+            unittest.mock.patch.object(mylock, "unlock") as mock_unlock:
+
+            with mylock("myresource"):
+                mock_lock.assert_called_once_with("myresource", None)
+                mock_unlock.assert_not_called()
+            mock_unlock.assert_called_once_with("myresource", unittest.mock.ANY)
