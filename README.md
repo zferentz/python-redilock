@@ -72,6 +72,8 @@ if not lock.lock("my_lock", block=False):  # try to lock again but do't block
   print("Couldnt acquire the lock")
 ```
 
+Note that in the example above we lock for 10s and then we try to lock without blocking and that's why we see the print immediately. If you run the example twice - the second time will have to wait 10s until the lock (from the first run) is released .
+
 ### Good to know and best practices
 * The TTL is super important. it dictates when to auto-release the lock if your code doesnt release it
   (in case of a bug or a crash). You should not rely on it for unlocking as your code should either unlock
