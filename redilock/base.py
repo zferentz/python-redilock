@@ -64,11 +64,11 @@ class DistributedLockBase:
         assert (
             isinstance(interval, (int, float)) and interval > 0
         ), "interval must be >0"
-        if block not in (True, False):
+        if isinstance(block, bool):
+            end_wait = None
+        else:
             assert isinstance(block, (int, float)) and block > 0, "block must be >0"
             end_wait = time.time() + block
-        else:
-            end_wait = None
 
         return f"_LOCK_{lock_name}_{uuid.uuid4().hex}", end_wait
 

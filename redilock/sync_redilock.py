@@ -92,13 +92,3 @@ class DistributedLock(base.DistributedLockBase):
                 unlock_secret_token,
             ],
         )
-
-
-def mytest():
-    dl = DistributedLock()
-    lock = dl.lock("zvika1", 5)
-    print(lock)
-    dl.unlock("zvika1", lock)
-    print(dl.lock("zvika1", 5, block=False))
-    lock = dl.lock("zvika1", 5)
-    print(lock)

@@ -97,16 +97,3 @@ class DistributedLock(base.DistributedLockBase):
                 unlock_secret_token,
             ],
         )
-
-
-async def my_test():
-    dl = DistributedLock("127.0.0.1", 6379, 5)
-    lock = await dl.lock("zvika1", 5)
-    print(lock)
-    await dl.unlock("zvika1", lock)
-    print(await dl.lock("zvika1", 5, block=False))
-    lock = await dl.lock("zvika1", 5)
-    print(lock)
-
-
-# asyncio.run(my_test())
