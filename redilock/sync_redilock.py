@@ -102,10 +102,3 @@ class DistributedLock(base.DistributedLockBase):
             yield self
         finally:
             self.unlock(lock_name, unlock_secret_token)
-
-
-l = DistributedLock(ttl=5)
-l.lock("resource")
-print("Lock acquired")
-with l("resource"):
-    print("Lock acquired again")
