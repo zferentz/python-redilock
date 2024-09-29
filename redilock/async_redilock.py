@@ -15,11 +15,13 @@ class _RediScript(base.RedisLuaScriptBase):
 
     async def run(self, _redis: redis.Redis, keys: tuple, args: list):
         try:
-            result = await _redis.evalsha(self._script_sha1, len(keys), *keys, *args)
+            result = await _redis.evalsha(self._script_sha1, len(keys), *keys,
+                                          *args)
 
         except redis.exceptions.NoScriptError:
             await _redis.script_load(self._script)
-            result = await _redis.evalsha(self._script_sha1, len(keys), *keys, *args)
+            result = await _redis.evalsha(self._script_sha1, len(keys), *keys,
+                                          *args)
 
         return result
 
@@ -45,11 +47,11 @@ class DistributedLock(base.DistributedLockBase):
         await self._redis.ping()
 
     async def lock(
-        self,
-        lock_name: str,
-        ttl: float = None,
-        block: bool | float | int = True,
-        interval: float | int = None,
+            self,
+            lock_name: str,
+            ttl: float = None,
+            block: bool | float | int = True,
+            interval: float | int = None,
     ):
         """Lock a resource (by lock name).  Wait until lock is owned.
 
@@ -88,7 +90,11 @@ class DistributedLock(base.DistributedLockBase):
 
         assert False, "Can never be here"
 
-    async def unlock(self, lock_name: str, unlock_secret_token: str) -> bool:
+    async def unlock(self, unlock_secret_token: str) -> bool:
+        lock_name = self._token2lockname(unlock_secret_token)
+        if not lock_name:
+            return False
+
         if not self._redis:
             await self._connect()
 
@@ -107,4 +113,4 @@ class DistributedLock(base.DistributedLockBase):
         try:
             yield self
         finally:
-            await self.unlock(lock_name, unlock_secret_token)
+            await self.unlock(unlock_secret_token)

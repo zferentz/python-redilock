@@ -39,11 +39,11 @@ class DistributedLock(base.DistributedLockBase):
         self._redis.ping()
 
     def lock(
-        self,
-        lock_name: str,
-        ttl: float = None,
-        block: bool | float | int = True,
-        interval: float | int = None,
+            self,
+            lock_name: str,
+            ttl: float = None,
+            block: bool | float | int = True,
+            interval: float | int = None,
     ):
         """Lock a resource (by lock name).  Wait until lock is owned.
 
@@ -82,7 +82,11 @@ class DistributedLock(base.DistributedLockBase):
 
         assert False, "Can never be here"
 
-    def unlock(self, lock_name: str, unlock_secret_token: str) -> bool:
+    def unlock(self, unlock_secret_token: str) -> bool:
+        lock_name = self._token2lockname(unlock_secret_token)
+        if not lock_name:
+            return False
+
         if not self._redis:
             self._connect()
 
@@ -101,4 +105,4 @@ class DistributedLock(base.DistributedLockBase):
         try:
             yield self
         finally:
-            self.unlock(lock_name, unlock_secret_token)
+            self.unlock(unlock_secret_token)

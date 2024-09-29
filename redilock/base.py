@@ -102,7 +102,24 @@ class DistributedLockBase:
             assert isinstance(block, (int, float)) and block > 0, "block must be >0"
             end_wait = time.time() + block
 
-        return f"_LOCK_{lock_name}_{uuid.uuid4().hex}", ttl, end_wait, interval
+        unlock_secret_token = self._lockname2token(lock_name)
+
+        return unlock_secret_token, ttl, end_wait, interval
+
+    @classmethod
+    def _lockname2token(cls, lock_name: str) -> str:
+        return f"_LOCK:{lock_name}:{uuid.uuid4().hex}"
+
+    @classmethod
+    def _token2lockname(cls, unlock_secret_token: str) -> str:
+        if not isinstance(unlock_secret_token, str):
+            return ""
+        delim = unlock_secret_token.split(":")
+        if len(delim) != 3 or delim[0] != "_LOCK":
+            return ""
+        return delim[1]
+
+
 
     @abc.abstractmethod
     async def lock(
@@ -137,7 +154,7 @@ class DistributedLockBase:
         """Refer to docstring for async lock() above"""
 
     @abc.abstractmethod
-    async def unlock(self, lock_name: str, unlock_secret_token: str) -> bool:
+    async def unlock(self, unlock_secret_token: str) -> bool:
         """Unlock a resource
 
         :param str lock_name: the name of the lock
@@ -147,5 +164,5 @@ class DistributedLockBase:
         """
 
     @abc.abstractmethod
-    def unlock(self, lock_name: str, unlock_secret_token: str) -> bool:
+    def unlock(self, unlock_secret_token: str) -> bool:
         """Refer to docstring for async unlock() above"""

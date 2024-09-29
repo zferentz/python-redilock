@@ -40,14 +40,12 @@ threading_mutex = threading.Lock()
 redilock_mutex = redilock.DistributedLock(ttl=10)
 
 # To test different scenarios - uncomment ONE of the lines below
-LOCK = None
-# LOCK = redilock_mutex
-# LOCK = threading_mutex
-
+LOCK = redilock_mutex
+#LOCK = threading_mutex
+#LOCK = None
 
 # Global array to count number of errors from all threads
 total_errors = []
-
 
 def _update_shared_file() -> int:
     errors = 0

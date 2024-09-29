@@ -24,12 +24,12 @@ def main():
     assert result is False
 
     print("Step4: Unlocking the lock with the wrong key...")
-    result = lock.unlock(lock_name, "wrong-key")
+    result = lock.unlock("wrong-key")
     print(f"Got {result}")
     assert result is False
 
     print("Step5: Unlocking the lock with the correct key...")
-    result = lock.unlock(lock_name, unlock_secret_token)
+    result = lock.unlock(unlock_secret_token)
     print(f"Got {result}")
     assert result is True
 

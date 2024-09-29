@@ -111,6 +111,17 @@ class TestDistributedLockBase(unittest.TestCase):
         self.assertEqual(interval, 2)
 
     @unittest.mock.patch.object(uuid, "uuid4")
+    def test_token_lock_name(self, mock_uuid4):
+        mock_uuid4.return_value.hex = "AAAA-BBBB-CCCC-DDDD"
+
+        token = base.DistributedLockBase._lockname2token("TEST1234")
+        self.assertEqual(token, "_LOCK:TEST1234:AAAA-BBBB-CCCC-DDDD")
+
+        lock_name = base.DistributedLockBase._token2lockname(token)
+        self.assertEqual(lock_name, "TEST1234")
+
+
+    @unittest.mock.patch.object(uuid, "uuid4")
     def test_prepare_lock(self, mock_uuid4):
 
         class MyTestDistributedLock(base.DistributedLockBase):
@@ -126,7 +137,7 @@ class TestDistributedLockBase(unittest.TestCase):
         )
 
         self.assertEqual(end_wait, None)
-        self.assertEqual(unlock_secret_token, "_LOCK_mylock_AAAA-BBBB-CCCC-DDDD")
+        self.assertEqual(unlock_secret_token, "_LOCK:mylock:AAAA-BBBB-CCCC-DDDD")
         self.assertEqual(ttl, 14)
         self.assertEqual(interval, 0.66)
 
