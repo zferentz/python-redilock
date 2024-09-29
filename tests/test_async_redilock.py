@@ -97,9 +97,9 @@ class TestRediLockAsync(unittest.IsolatedAsyncioTestCase):
         lock = redilock.DistributedLock()
         lock._redis = unittest.mock.AsyncMock()
         lock._unlock_script = unittest.mock.AsyncMock()
-        await lock.unlock("mylock", "my_secret_token")
+        await lock.unlock("_LOCK:mylock:AA-BBB-CCCC-DDDD")
         lock._unlock_script.run.assert_called_once_with(
-            lock._redis, ("mylock",), ["my_secret_token"]
+            lock._redis, ("mylock",), ["_LOCK:mylock:AA-BBB-CCCC-DDDD"]
         )
 
     async def test_with_lock(self):
@@ -110,4 +110,4 @@ class TestRediLockAsync(unittest.IsolatedAsyncioTestCase):
             async with mylock("myresource"):
                 mock_lock.assert_called_once_with("myresource", None)
                 mock_unlock.assert_not_called()
-            mock_unlock.assert_called_once_with("myresource", unittest.mock.ANY)
+            mock_unlock.assert_called_once_with(unittest.mock.ANY)
