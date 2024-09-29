@@ -63,7 +63,7 @@ import redilock.sync_redilock as redilock
 lock = redilock.DistributedLock(ttl=300)  # lock for maximum 5min
 
 unlock_secret_token = lock.lock("my_lock")  # Acquire the lock
-lock.unlock("my_lock", unlock_secret_token)  # Release the lock
+lock.unlock(unlock_secret_token)  # Release the lock
 ```
 
 By default, if you try to acquire a lock - your program will be blocked until the lock is acquired.
