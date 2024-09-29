@@ -22,14 +22,12 @@ to any cloud/distributed environment.
 
 **Redilock** main features:
 
-* Simple to use:
-    * Context manager (`with statement`)
-    * Only 2 api calls `lock()` and `unlock()`
+* Simple to use - either use `with-statement` (context manager) or directly call the `lock()` and `unlock()` methods.
 * Supports both synchronous implementation and an async implementation
 * Safe:
     * Caller must specify the lock-expiration (TTL - time to lock) so even if the program/host crashes - the lock will
       be eventually released
-    * Unlocking the lock can be performed only by the party who put the lock
+    * Unlocking can be performed only by the task who put the lock
 
 ### Installation
 ```# pip install python-redilock```
@@ -48,14 +46,13 @@ with mylock("my_lock"):
   print("I've got the lock !!")
 ```
 
-Once creating the lock (`my_lock` variable)  it can be used to lock different resources (or different lock, if you prefer).
+Once creating the `DistributedLock` object (`mylock` variable)  it can be used to lock different resources (or different locks, if you prefer).
 In the example above, we use a simple with-statement to lock the "my_lock" lock,  print something and unlock.
 When using this approach, the lock is always blocking - the code will wait until the lock is available.
 Note that we're using `ttl=30` which means that if our code fails or the program crashes - the lock will expire after 30 seconds.
 
 
-
-If you do not want to rely on the with-statement or you need better control over the lock - you can directly using `lock` and `unlock`
+If better control over the lock is needed - you can directly use the  `lock` and `unlock` methods:
 
 ```
 import redilock.sync_redilock as redilock
@@ -63,6 +60,7 @@ import redilock.sync_redilock as redilock
 lock = redilock.DistributedLock(ttl=300)  # lock for maximum 5min
 
 unlock_secret_token = lock.lock("my_lock")  # Acquire the lock
+print("I've got the lock !!")
 lock.unlock(unlock_secret_token)  # Release the lock
 ```
 
@@ -79,13 +77,14 @@ if not lock.lock("my_lock", block=False):  # try to lock again but do't block
   print("Couldnt acquire the lock")
 ```
 
-Note that in the example above we lock for 10s and then we try to lock without blocking and that's why we see the print immediately. If you run the example twice - the second time will have to wait 10s until the lock (from the first run) is released .
+Note that in the example above we lock for 10s and then we try to lock without blocking .
+If you run the example twice - the second time will have to wait ~10s until the lock (from the first run) is released.
 
 ### Good to know and best practices
 * The TTL is super important. it dictates when to auto-release the lock if your code doesnt release it
   (in case of a bug or a crash). You should not rely on it for unlocking as your code should either unlock
   using the `unlock` function or via `with statement`.
-  As so, a large value (e.g 30-60 seconds) is probably fine.
+  As so, a large value (e.g 30-60 seconds) is probably fine as it will be used only in extreme cases.
 * you can specify TTL when instantiating the class or when performing the lock operation itself.  
 * When using blocking lock there is a background loop that checks redis periodically if the lock is still acquired.
   The system uses check-interval of 0.25. You can modify this value if needed via the `interval` parameter.
