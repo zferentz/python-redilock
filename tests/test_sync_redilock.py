@@ -141,3 +141,13 @@ class TestRediLockSync(unittest.TestCase):
         lock._redis = unittest.mock.MagicMock()
         with self.assertRaises(AssertionError):
             lock.extend("_LOCK:mylock:AA-BB-CC-DD")
+
+    def test_extend_sub_millisecond_ttl_rounds_up(self):
+        lock = redilock.DistributedLock(ttl=10)
+        lock._redis = unittest.mock.MagicMock()
+        lock._extend_script = unittest.mock.MagicMock()
+        lock._extend_script.run.return_value = 1
+        self.assertTrue(lock.extend("_LOCK:mylock:AA-BB-CC-DD", 0.0004))
+        lock._extend_script.run.assert_called_once_with(
+            lock._redis, ("mylock",), ["_LOCK:mylock:AA-BB-CC-DD", 1]
+        )

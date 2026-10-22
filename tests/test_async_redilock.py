@@ -150,3 +150,13 @@ class TestRediLockAsync(unittest.IsolatedAsyncioTestCase):
         lock._redis = unittest.mock.AsyncMock()
         with self.assertRaises(AssertionError):
             await lock.extend("_LOCK:mylock:AA-BB-CC-DD")
+
+    async def test_extend_sub_millisecond_ttl_rounds_up(self):
+        lock = redilock.DistributedLock(ttl=10)
+        lock._redis = unittest.mock.AsyncMock()
+        lock._extend_script = unittest.mock.AsyncMock()
+        lock._extend_script.run.return_value = 1
+        self.assertTrue(await lock.extend("_LOCK:mylock:AA-BB-CC-DD", 0.0004))
+        lock._extend_script.run.assert_called_once_with(
+            lock._redis, ("mylock",), ["_LOCK:mylock:AA-BB-CC-DD", 1]
+        )

@@ -2,6 +2,7 @@
 
 import abc
 import hashlib
+import math
 import time
 import uuid
 
@@ -123,7 +124,9 @@ class DistributedLockBase:
     def _prepare_extend(self, ttl: float) -> int:
         ttl = ttl or self._ttl
         assert isinstance(ttl, (int, float)) and ttl > 0, "ttl must be >0"
-        return int(ttl * 1000)
+        # Round up: PEXPIRE with 0 deletes the key, so a sub-millisecond ttl
+        # truncated to 0 would silently release the lock instead of extending it
+        return math.ceil(ttl * 1000)
 
     @classmethod
     def _lockname2token(cls, lock_name: str) -> str:
