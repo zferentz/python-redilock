@@ -30,6 +30,7 @@ class DistributedLock(base.DistributedLockBase):
     """Distributed Lock"""
 
     _unlock_script = _RediScript(base.UNLOCK_SCRIPT)
+    _extend_script = _RediScript(base.EXTEND_SCRIPT)
     _connect_mutex = asyncio.Lock()
 
     async def _connect(self):
@@ -104,6 +105,26 @@ class DistributedLock(base.DistributedLockBase):
             (lock_name,),
             [
                 unlock_secret_token,
+            ],
+        )
+
+    async def extend(self, unlock_secret_token: str, ttl: float = None) -> bool:
+        lock_name = self._token2lockname(unlock_secret_token)
+        if not lock_name:
+            return False
+
+        ttl_ms = self._prepare_extend(ttl)
+
+        if not self._redis:
+            await self._connect()
+
+        # Run the extend-script with lock_name, unlock_secret_token & new ttl
+        return 1 == await self._extend_script.run(
+            self._redis,
+            (lock_name,),
+            [
+                unlock_secret_token,
+                ttl_ms,
             ],
         )
 

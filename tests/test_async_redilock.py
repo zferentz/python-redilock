@@ -111,3 +111,52 @@ class TestRediLockAsync(unittest.IsolatedAsyncioTestCase):
                 mock_lock.assert_called_once_with("myresource", None)
                 mock_unlock.assert_not_called()
             mock_unlock.assert_called_once_with(unittest.mock.ANY)
+
+    async def test_extend(self):
+        lock = redilock.DistributedLock(ttl=10)
+        lock._redis = unittest.mock.AsyncMock()
+        lock._extend_script = unittest.mock.AsyncMock()
+        lock._extend_script.run.return_value = 1
+        self.assertTrue(await lock.extend("_LOCK:mylock:AA-BB-CC-DD", 2.5))
+        lock._extend_script.run.assert_called_once_with(
+            lock._redis, ("mylock",), ["_LOCK:mylock:AA-BB-CC-DD", 2500]
+        )
+
+    async def test_extend_default_ttl(self):
+        lock = redilock.DistributedLock(ttl=10)
+        lock._redis = unittest.mock.AsyncMock()
+        lock._extend_script = unittest.mock.AsyncMock()
+        lock._extend_script.run.return_value = 1
+        self.assertTrue(await lock.extend("_LOCK:mylock:AA-BB-CC-DD"))
+        lock._extend_script.run.assert_called_once_with(
+            lock._redis, ("mylock",), ["_LOCK:mylock:AA-BB-CC-DD", 10000]
+        )
+
+    async def test_extend_not_owned(self):
+        lock = redilock.DistributedLock(ttl=10)
+        lock._redis = unittest.mock.AsyncMock()
+        lock._extend_script = unittest.mock.AsyncMock()
+        lock._extend_script.run.return_value = 0
+        self.assertFalse(await lock.extend("_LOCK:mylock:AA-BB-CC-DD"))
+
+    async def test_extend_invalid_token(self):
+        lock = redilock.DistributedLock(ttl=10)
+        lock._extend_script = unittest.mock.AsyncMock()
+        self.assertFalse(await lock.extend("not-a-token"))
+        lock._extend_script.run.assert_not_called()
+
+    async def test_extend_invalid_ttl(self):
+        lock = redilock.DistributedLock()
+        lock._redis = unittest.mock.AsyncMock()
+        with self.assertRaises(AssertionError):
+            await lock.extend("_LOCK:mylock:AA-BB-CC-DD")
+
+    async def test_extend_sub_millisecond_ttl_rounds_up(self):
+        lock = redilock.DistributedLock(ttl=10)
+        lock._redis = unittest.mock.AsyncMock()
+        lock._extend_script = unittest.mock.AsyncMock()
+        lock._extend_script.run.return_value = 1
+        self.assertTrue(await lock.extend("_LOCK:mylock:AA-BB-CC-DD", 0.0004))
+        lock._extend_script.run.assert_called_once_with(
+            lock._redis, ("mylock",), ["_LOCK:mylock:AA-BB-CC-DD", 1]
+        )

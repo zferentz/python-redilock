@@ -102,3 +102,52 @@ class TestRediLockSync(unittest.TestCase):
                 mock_lock.assert_called_once_with("myresource", None)
                 mock_unlock.assert_not_called()
             mock_unlock.assert_called_once_with(unittest.mock.ANY)
+
+    def test_extend(self):
+        lock = redilock.DistributedLock(ttl=10)
+        lock._redis = unittest.mock.MagicMock()
+        lock._extend_script = unittest.mock.MagicMock()
+        lock._extend_script.run.return_value = 1
+        self.assertTrue(lock.extend("_LOCK:mylock:AA-BB-CC-DD", 2.5))
+        lock._extend_script.run.assert_called_once_with(
+            lock._redis, ("mylock",), ["_LOCK:mylock:AA-BB-CC-DD", 2500]
+        )
+
+    def test_extend_default_ttl(self):
+        lock = redilock.DistributedLock(ttl=10)
+        lock._redis = unittest.mock.MagicMock()
+        lock._extend_script = unittest.mock.MagicMock()
+        lock._extend_script.run.return_value = 1
+        self.assertTrue(lock.extend("_LOCK:mylock:AA-BB-CC-DD"))
+        lock._extend_script.run.assert_called_once_with(
+            lock._redis, ("mylock",), ["_LOCK:mylock:AA-BB-CC-DD", 10000]
+        )
+
+    def test_extend_not_owned(self):
+        lock = redilock.DistributedLock(ttl=10)
+        lock._redis = unittest.mock.MagicMock()
+        lock._extend_script = unittest.mock.MagicMock()
+        lock._extend_script.run.return_value = 0
+        self.assertFalse(lock.extend("_LOCK:mylock:AA-BB-CC-DD"))
+
+    def test_extend_invalid_token(self):
+        lock = redilock.DistributedLock(ttl=10)
+        lock._extend_script = unittest.mock.MagicMock()
+        self.assertFalse(lock.extend("not-a-token"))
+        lock._extend_script.run.assert_not_called()
+
+    def test_extend_invalid_ttl(self):
+        lock = redilock.DistributedLock()
+        lock._redis = unittest.mock.MagicMock()
+        with self.assertRaises(AssertionError):
+            lock.extend("_LOCK:mylock:AA-BB-CC-DD")
+
+    def test_extend_sub_millisecond_ttl_rounds_up(self):
+        lock = redilock.DistributedLock(ttl=10)
+        lock._redis = unittest.mock.MagicMock()
+        lock._extend_script = unittest.mock.MagicMock()
+        lock._extend_script.run.return_value = 1
+        self.assertTrue(lock.extend("_LOCK:mylock:AA-BB-CC-DD", 0.0004))
+        lock._extend_script.run.assert_called_once_with(
+            lock._redis, ("mylock",), ["_LOCK:mylock:AA-BB-CC-DD", 1]
+        )

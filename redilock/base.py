@@ -2,6 +2,7 @@
 
 import abc
 import hashlib
+import math
 import time
 import uuid
 
@@ -45,6 +46,20 @@ UNLOCK_SCRIPT = """
     if redis.call("get", lock_name) == lock_secret_token
     then
         return redis.call("del", lock_name)
+    else
+        return 0
+    end
+"""
+
+# EXTEND_SCRIPT: Redis Lua script to reset the expiration of a resource
+#                (KEY[1]) to ARGV[2] milliseconds, only if the caller provided
+#                the correct secret token (ARGV[1])
+EXTEND_SCRIPT = """
+    local lock_name = KEYS[1]
+    local lock_secret_token = ARGV[1]
+    if redis.call("get", lock_name) == lock_secret_token
+    then
+        return redis.call("pexpire", lock_name, ARGV[2])
     else
         return 0
     end
@@ -106,6 +121,13 @@ class DistributedLockBase:
 
         return unlock_secret_token, ttl, end_wait, interval
 
+    def _prepare_extend(self, ttl: float) -> int:
+        ttl = ttl or self._ttl
+        assert isinstance(ttl, (int, float)) and ttl > 0, "ttl must be >0"
+        # Round up: PEXPIRE with 0 deletes the key, so a sub-millisecond ttl
+        # truncated to 0 would silently release the lock instead of extending it
+        return math.ceil(ttl * 1000)
+
     @classmethod
     def _lockname2token(cls, lock_name: str) -> str:
         return f"_LOCK:{lock_name}:{uuid.uuid4().hex}"
@@ -166,3 +188,22 @@ class DistributedLockBase:
     @abc.abstractmethod
     def unlock(self, unlock_secret_token: str) -> bool:
         """Refer to docstring for async unlock() above"""
+
+    @abc.abstractmethod
+    async def extend(self, unlock_secret_token: str, ttl: float = None) -> bool:
+        """Extend a lock that is still owned by the caller
+
+        Resets the lock expiration to `ttl` seconds from now (it does not add
+        to the remaining time).  Useful for long-running work or for a lease
+        that is held and renewed periodically.
+
+        :param str unlock_secret_token: the secret token returned by lock()
+        :param float|int ttl: new Time To Lock in seconds (default is the
+                              ttl given when instantiating the class)
+        :returns: boolean - True if the lock is still owned and was extended,
+                  False if it expired or is now owned by someone else
+        """
+
+    @abc.abstractmethod
+    def extend(self, unlock_secret_token: str, ttl: float = None) -> bool:
+        """Refer to docstring for async extend() above"""
