@@ -117,3 +117,25 @@ with mylock("my_lock"):
     time.sleep(3)
     print("Hmm...i dont have the lock anymore :( ")
 ```
+
+* To keep a lock for longer than its TTL - extend it before it expires.
+`extend()` resets the expiration to `ttl` seconds from now, and only if you
+still own the lock.  It returns `False` if the lock already expired or is now
+owned by someone else, so you can tell that you lost it.
+```
+import time
+import redilock.sync_redilock as redilock
+
+mylock = redilock.DistributedLock(ttl=10)
+
+unlock_secret_token = mylock.lock("my_lock")
+for _ in range(5):
+    time.sleep(3)  # do some work
+    if not mylock.extend(unlock_secret_token):  # another 10s from now
+        print("Lost the lock :(")
+        break
+mylock.unlock(unlock_secret_token)
+```
+The same pattern gives you a simple "leader" lease across processes: every process
+tries `lock(name, block=False)` periodically, and the one holding the lock keeps
+calling `extend()` well inside the TTL.
